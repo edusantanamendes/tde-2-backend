@@ -19,6 +19,7 @@ def list_users():
 @users_bp.route('/', methods=['POST'])
 @auth_required
 def create_user():
+
     from flask import request
     # only admin can create
     if request.user.get('tipo') != 'admin':
