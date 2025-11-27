@@ -17,3 +17,39 @@ def login():
         return jsonify({'erro':'credenciais inválidas'}), 401
     token = generate_token(user.id, user.tipo)
     return jsonify({'token': token, 'usuario': user.to_dict()}), 200
+
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    data = request.get_json() or {}
+
+    email = data.get('email')
+    nome = data.get('nome')
+    tipo = data.get('tipo', 'default')  # default se não enviar
+    senha = data.get('senha')
+
+    # validação
+    if not all([email, nome, tipo, senha]):
+        return jsonify({'erro': 'email, nome, tipo e senha são obrigatórios'}), 400
+
+    if tipo not in ['admin', 'default']:
+        return jsonify({'erro': 'tipo inválido (use admin ou default)'}), 400
+
+    # check se email já existe
+    if User.query.filter_by(email=email).first():
+        return jsonify({'erro': 'email já cadastrado'}), 400
+
+    # cria user
+    user = User(
+        email=email,
+        nome=nome,
+        tipo=tipo
+    )
+    user.set_password(senha)
+
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({
+        'mensagem': 'Usuário criado com sucesso',
+        'usuario': user.to_dict()
+    }), 201
